@@ -29,27 +29,12 @@ run().catch(error => { console.log(error.name, error.message) })
 
 // --------------------------- collection --------------------------->
 const categoriesCollection = client.db('usedProductResale').collection('categories');
-const productsByCategoryNameCollection = client.db('usedProductResale').collection('productsByCategoryName');
 
 app.get('/categories', async (req, res) => {
   const query = {};
   const result = await categoriesCollection.find(query).toArray();
   res.send(result)
 });
-
-
-app.get('/categories/:id', async (req, res) => {
-  const id = req.params.id;
-  const query = { categoryId: id };
-  const result = await productsByCategoryNameCollection.find(query).toArray();
-  res.send(result)
-});
-
-
-
-
-
-
 
 app.get('/', (req, res) => {
   res.send('Used Product server is running')
@@ -58,5 +43,3 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`server running on the port ${port}`.cyan)
 });
-
-module.exports.app;
