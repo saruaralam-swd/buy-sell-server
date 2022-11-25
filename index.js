@@ -116,7 +116,7 @@ app.put('/products/:id', async (req, res) => {
   const id = req.params.id;
   const filter = { _id: ObjectId(id) }
   const options = { upsert: true };
-  
+
   const updateDoc = {
     $set: {
       advertise: true
@@ -128,9 +128,15 @@ app.put('/products/:id', async (req, res) => {
 });
 
 
-
 app.get('/products', async (req, res) => {
   const query = {};
+  const result = await productsCollection.find(query).toArray();
+  res.send(result);
+});
+
+
+app.get('/advertisement', async (req, res) => {
+  const query = { advertise : true }
   const result = await productsCollection.find(query).toArray();
   res.send(result);
 });
