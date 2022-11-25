@@ -111,6 +111,24 @@ app.post('/product', async (req, res) => {
   res.send(result);
 });
 
+
+app.put('/products/:id', async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: ObjectId(id) }
+  const options = { upsert: true };
+  
+  const updateDoc = {
+    $set: {
+      advertise: true
+    },
+  };
+
+  const result = await productsCollection.updateOne(filter, updateDoc, options)
+  res.send(result)
+});
+
+
+
 app.get('/products', async (req, res) => {
   const query = {};
   const result = await productsCollection.find(query).toArray();
