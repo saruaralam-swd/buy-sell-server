@@ -52,7 +52,41 @@ const usersCollection = client.db('usedProductResale').collection('users');
 const categoriesCollection = client.db('usedProductResale').collection('categories');
 const productsCollection = client.db('usedProductResale').collection('products');
 
+const verifyAdmin = async (req, res, next) => {
+  const decodedEmail = req.decoded.email;
+  const query = { email: decodedEmail }
+  const user = await usersCollection.findOne(query);
 
+  if (user?.role !== 'admin') {
+    return res.status(403).send({ acknowledgement: false })
+  }
+
+  next();
+};
+
+const verifySeller = async (req, res, next) => {
+  const decodedEmail = req.decoded.email;
+  const query = { email: decodedEmail }
+  const user = await usersCollection.findOne(query);
+
+  if (user?.role !== 'seller') {
+    return res.status(403).send({ acknowledgement: false })
+  }
+
+  next();
+};
+
+const verifyBearer = async (req, res, next) => {
+  const decodedEmail = req.decoded.email;
+  const query = { email: decodedEmail }
+  const user = await usersCollection.findOne(query);
+
+  if (user?.role !== 'bearer') {
+    return res.status(403).send({ acknowledgement: false })
+  }
+
+  next();
+};
 
 // ---------------------> users
 app.post('/users', async (req, res) => {
@@ -60,7 +94,6 @@ app.post('/users', async (req, res) => {
   const result = await usersCollection.insertOne(user);
   res.send(result);
 });
-
 
 
 // ---------------------> categories
@@ -72,13 +105,17 @@ app.get('/categories', async (req, res) => {
 
 
 // ---------------------> products
+app.post('/product', async (req, res) => {
+  const data = req.body;
+  const result = await productsCollection.insertOne(data);
+  res.send(result);
+});
 
-
-
-
-
-
-
+app.get('/products', async (req, res) => {
+  const query = {};
+  const result = await productsCollection.find(query).toArray();
+  res.send(result);
+});
 
 
 app.get('/', (req, res) => {
