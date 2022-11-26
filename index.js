@@ -225,7 +225,7 @@ app.get('/allBuyers', async (req, res) => {
   // }
 
   const query = {};
-  const result = await ordersCollection.find(query).project({email: 1}).toArray();
+  const result = await ordersCollection.find(query).project({ email: 1 }).toArray();
   res.send(result)
 });
 
@@ -247,6 +247,29 @@ app.get('/mySellers', async (req, res) => {
 
 
 
+// ----> check user role <----
+app.get('/user/admin/:email', async (req, res) => { // check user is admin
+  const email = req.params.email;
+  const query = { email }
+  const user = await usersCollection.findOne(query);
+  res.send({ isAdmin: user?.role === 'admin' })
+});
+
+app.get('/user/seller/:email', async (req, res) => { // check user is seller
+  const email = req.params.email;
+  const query = { email }
+  const user = await usersCollection.findOne(query);
+  res.send({ isSeller: user?.role === 'seller' })
+});
+
+app.get('/user/buyer/:email', async (req, res) => { // check user is buyer
+  const email = req.params.email;
+  const query = { email }
+  const user = await usersCollection.findOne(query);
+  res.send({ isBuyer: user?.role === 'bearer' })
+});
+
+
 
 // <------------------->
 app.get('/', (req, res) => {
@@ -257,16 +280,3 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`server running on the port ${port}`.cyan)
 });
-
-// // temporary to update price field on appointment option
-// app.get('/addPrice', async (req, res) => {
-//   const filter = {};
-//   const options = { upsert: true };
-//   const updateDoc = {
-//     $set: {
-//       verify: "unverified",
-//     }
-//   }
-//   const result = await productsCollection.updateMany(filter, updateDoc, options);
-//   res.send(result)
-// });
