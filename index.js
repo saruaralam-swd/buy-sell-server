@@ -3,6 +3,7 @@ const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('colors')
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 
 const cors = require('cors');
 
@@ -45,12 +46,27 @@ async function run() {
 
   }
 }
-run().catch(error => { console.log(error.name, error.message) })
+run().catch(error => { console.log(error.name.bgRed, error.message.bold) })
 
 // --------------------------- collection --------------------------->
 const usersCollection = client.db('usedProductResale').collection('users');
 const categoriesCollection = client.db('usedProductResale').collection('categories');
 const productsCollection = client.db('usedProductResale').collection('products');
+const ordersCollection = client.db('usedProductResale').collection('orders');
+
+app.get('/jwt', async (req, res) => {
+  const email = req.query.email;
+  const query = { email: email };
+  const user = await usersCollection.findOne(query);
+
+  if (user) {
+    const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '20d' });
+    return res.send({ accessToken: token });
+  }
+
+  res.status(403).send({ accessToken: '' });
+});
+
 
 const verifyAdmin = async (req, res, next) => {
   const decodedEmail = req.decoded.email;
@@ -103,6 +119,12 @@ app.get('/categories', async (req, res) => {
   res.send(result)
 });
 
+app.get('/category/:id', async (req, res) => {
+  const id = req.params.id;
+  const query = { categoryId: id }
+  const result = await productsCollection.find(query).toArray();
+  res.send(result);
+});
 
 // ---------------------> products
 app.post('/product', async (req, res) => {
@@ -112,7 +134,7 @@ app.post('/product', async (req, res) => {
 });
 
 
-app.put('/products/:id', async (req, res) => {
+app.put('/products/:id', async (req, res) => { // for advertise 
   const id = req.params.id;
   const filter = { _id: ObjectId(id) }
   const options = { upsert: true };
@@ -136,15 +158,17 @@ app.get('/products', async (req, res) => {
 
 
 app.get('/advertisement', async (req, res) => {
-  const query = { advertise : true }
+  const query = { advertise: true, available: true }
   const result = await productsCollection.find(query).toArray();
   res.send(result);
 });
 
 
+// <------------------->
 app.get('/', (req, res) => {
   res.send('Used Product server is running')
 });
+
 
 app.listen(port, () => {
   console.log(`server running on the port ${port}`.cyan)
