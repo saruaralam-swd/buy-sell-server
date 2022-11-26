@@ -105,7 +105,7 @@ const verifyBearer = async (req, res, next) => {
 };
 
 // ---------------------> users
-app.post('/users', async (req, res) => {
+app.post('/users', async (req, res) => { // store user info in Data base
   const user = req.body;
   const result = await usersCollection.insertOne(user);
   res.send(result);
@@ -121,7 +121,7 @@ app.get('/categories', async (req, res) => {
 
 app.get('/category/:id', async (req, res) => {
   const id = req.params.id;
-  const query = { categoryId: id }
+  const query = { categoryId: id, }
   const result = await productsCollection.find(query).toArray();
   res.send(result);
 });
@@ -162,6 +162,38 @@ app.get('/advertisement', async (req, res) => {
   const result = await productsCollection.find(query).toArray();
   res.send(result);
 });
+
+
+// ---------------------> orders
+// when order success, product available: false
+app.get('/orders', async (req, res) => {
+  const email = req.query.email;
+  const query = { email };
+  const result = await ordersCollection.find(query).toArray();
+  res.send(result);
+});
+
+
+app.put('/available/:id', async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: ObjectId(id) };
+  const options = { upsert: true };
+  const updateDoc = {
+    $set: {
+      available: false
+    }
+  }
+  const result = await productsCollection.updateOne(filter, updateDoc, options);
+  res.send(result);
+});
+
+
+app.post('/order', async (req, res) => {
+  const order = req.body;
+  const result = await ordersCollection.insertOne(order);
+  res.send(result);
+});
+
 
 
 // <------------------->
