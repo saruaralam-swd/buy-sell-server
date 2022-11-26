@@ -112,6 +112,7 @@ app.post('/users', async (req, res) => { // store user info in Data base
 });
 
 
+
 // ---------------------> categories
 app.get('/categories', async (req, res) => {
   const query = {};
@@ -125,6 +126,8 @@ app.get('/category/:id', async (req, res) => {
   const result = await productsCollection.find(query).toArray();
   res.send(result);
 });
+
+
 
 // ---------------------> products
 app.post('/product', async (req, res) => {
@@ -163,6 +166,8 @@ app.get('/advertisement', async (req, res) => {
   res.send(result);
 });
 
+
+
 // ---------------------> orders
 // when order success, product available: false
 app.get('/orders', async (req, res) => {
@@ -193,6 +198,8 @@ app.post('/order', async (req, res) => {
   res.send(result);
 });
 
+
+// ---------------------> myBuyers
 app.get('/myBuyers', verifyJwt, async (req, res) => {
   // const email = req.query.email;
   // const filter = { email };
@@ -203,12 +210,40 @@ app.get('/myBuyers', verifyJwt, async (req, res) => {
   // }
 
   // const query = { sellerEmail: email };
-  
   const query = {};
   const result = await ordersCollection.find(query).toArray();
   res.send(result)
 });
 
+app.get('/allBuyers', async (req, res) => {
+  // const email = req.query.email;
+  // const filter = { email };
+  // const user = await usersCollection.findOne(filter);
+
+  // if (user?.role !== "admin") {
+  //   return res.status(403).send({ message: 'forbidden access' })
+  // }
+
+  const query = {};
+  const result = await ordersCollection.find(query).project({email: 1}).toArray();
+  res.send(result)
+});
+
+
+// ---------------------> sellers
+app.get('/mySellers', async (req, res) => {
+  // const email = req.query.email;
+  // const filter = { email };
+  // const user = await usersCollection.findOne(filter);
+
+  // if (user?.role !== "admin") {
+  //   return res.status(403).send({ message: 'forbidden access' })
+  // }
+
+  const query = {};
+  const result = await productsCollection.find(query).project({ sellerEmail: 1, sellerName: 1, verify: 1, }).toArray();
+  res.send(result);
+});
 
 
 
@@ -223,17 +258,15 @@ app.listen(port, () => {
   console.log(`server running on the port ${port}`.cyan)
 });
 
-
-
-    // // temporary to update price field on appointment option
-    // app.get('/addPrice', async (req, res) => {
-    //   const filter = {};
-    //   const options = { upsert: true };
-    //   const updateDoc = {
-    //     $set: {
-    //       price: 99,
-    //     }
-    //   }
-    //   const result = await allServicesCollection.updateMany(filter, updateDoc, options);
-    //   res.send(result)
-    // });
+// // temporary to update price field on appointment option
+// app.get('/addPrice', async (req, res) => {
+//   const filter = {};
+//   const options = { upsert: true };
+//   const updateDoc = {
+//     $set: {
+//       verify: "unverified",
+//     }
+//   }
+//   const result = await productsCollection.updateMany(filter, updateDoc, options);
+//   res.send(result)
+// });
