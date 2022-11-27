@@ -53,6 +53,7 @@ const usersCollection = client.db('usedProductResale').collection('users');
 const categoriesCollection = client.db('usedProductResale').collection('categories');
 const productsCollection = client.db('usedProductResale').collection('products');
 const ordersCollection = client.db('usedProductResale').collection('orders');
+const sellersCollection = client.db('usedProductResale').collection('sellers');
 
 
 const verifyAdmin = async (req, res, next) => {
@@ -145,6 +146,22 @@ app.post('/product', verifyJwt, verifySeller, async (req, res) => {
 });
 
 
+// যদি সেলার already থাকে তাহলে database add করা দরকার নায়
+// app.post('/seller', async (req, res) => {
+//   const data = req.body;
+//   const email = data.email;
+//   const query = { email };
+//   const seller = await sellersCollection.findOne(query);
+//   if(seller) {
+//     return res.send({acknowledgement: false})
+//   }
+//   const result = await sellersCollection.insertOne(data);
+//   res.send(result);
+// });
+
+
+
+
 app.get('/myProducts', verifyJwt, verifySeller, async (req, res) => {
   const email = req.query.email;
   const query = { sellerEmail: email };
@@ -153,7 +170,7 @@ app.get('/myProducts', verifyJwt, verifySeller, async (req, res) => {
 });
 
 
-app.put('/products/:id', async (req, res) => { // for advertise 
+app.put('/products/:id', verifyJwt, verifySeller, async (req, res) => { // for advertise 
   const id = req.params.id;
   const filter = { _id: ObjectId(id) }
   const options = { upsert: true };
@@ -169,7 +186,7 @@ app.put('/products/:id', async (req, res) => { // for advertise
 });
 
 
-app.delete('/product/:id', async (req, res) => {
+app.delete('/product/:id', verifyJwt, verifySeller, async (req, res) => {
   const id = req.params.id;
   const query = { _id: ObjectId(id) };
   const result = await productsCollection.deleteOne(query);
@@ -178,6 +195,7 @@ app.delete('/product/:id', async (req, res) => {
 
 
 
+// -------------> advertise
 app.get('/advertisement', async (req, res) => {
   const query = { advertise: true, }
   const result = await productsCollection.find(query).toArray();
@@ -226,8 +244,6 @@ app.put('/available/:id', async (req, res) => {
 });
 
 
-
-
 // ---------------------> for admin
 app.get('/allBuyers', verifyJwt, verifyAdmin, async (req, res) => {
   const query = {};
@@ -240,6 +256,34 @@ app.get('/allSellers', verifyJwt, verifyAdmin, async (req, res) => {
   const result = await productsCollection.find(query).project({ sellerEmail: 1, sellerName: 1, verify: 1, }).toArray();
   res.send(result);
 });
+
+app.put('/verifySeller/:email', async (req, res) => {
+  const email = req.params.email;
+  const query = { sellerEmail: email };
+  const options = { upsert: true };
+  const updateDoc = {
+    $set: {
+      verify: true
+    }
+  }
+  const result = await productsCollection.updateMany(query, updateDoc, options);
+  res.send(result);
+});
+
+
+app.get('/addPrice', verifyJwt, verifyAdmin, async (req, res) => {
+  const filter = {};
+  const options = { upsert: true };
+  const updateDoc = {
+    $set: {
+      verify: false
+    }
+  }
+  const result = await productsCollection.updateMany(filter, updateDoc, options);
+  res.send(result)
+});
+
+
 
 
 // ----> check user role <----
@@ -297,7 +341,7 @@ app.listen(port, () => {
 //   const options = { upsert: true };
 //   const updateDoc = {
 //     $set: {
-//       available: true
+//       verify: false
 //     }
 //   }
 //   const result = await productsCollection.updateMany(filter, updateDoc, options);
