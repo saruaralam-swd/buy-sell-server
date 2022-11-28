@@ -4,6 +4,8 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('colors')
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 
 const cors = require('cors');
 
@@ -54,6 +56,7 @@ const categoriesCollection = client.db('usedProductResale').collection('categori
 const productsCollection = client.db('usedProductResale').collection('products');
 const ordersCollection = client.db('usedProductResale').collection('orders');
 const sellersCollection = client.db('usedProductResale').collection('sellers');
+const paymentsCollection = client.db('usedProductResale').collection('payments');
 
 
 
@@ -115,12 +118,12 @@ app.post('/users', async (req, res) => { // store user info in Data base
   const email = (user.email);
   const query = { email }
   const reqEmail = await usersCollection.findOne(query);
-  if(!reqEmail){
+  if (!reqEmail) {
     const result = await usersCollection.insertOne(user);
     res.send(result);
   }
-  else{
-    res.send({acknowledged: true})
+  else {
+    res.send({ acknowledged: true })
   }
 });
 
@@ -191,8 +194,8 @@ app.delete('/product/:id', verifyJwt, verifySeller, async (req, res) => {
 
 
 // -------------> advertise
-app.get('/advertisement', verifyJwt, async (req, res) => {
-  const query = { advertise: true, }
+app.get('/advertisement', async (req, res) => {
+  const query = { advertise: true, available: true }
   const result = await productsCollection.find(query).toArray();
   res.send(result);
 });
@@ -242,16 +245,85 @@ app.get('/order/:id', async (req, res) => {
 });
 
 
+app.post('/create-payment-intent', async (req, res) => {
+  const order = req.body;
+  const price = order.price;
+  const amount = price * 100;
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    currency: 'usd',
+    amount: amount,
+    "payment_method_types": [
+      "card"
+    ]
+  });
+  res.send({
+    clientSecret: paymentIntent.client_secret,
+  });
+});
+
+
+app.post('/payments', async (req, res) => {
+  const payment = req.body;
+  const result = await paymentsCollection.insertOne(payment);
+  res.send(result);
+});
+
+
+app.put('/orderPaid/:id', verifyJwt, async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: ObjectId(id) };
+  const options = { upsert: true };
+  const updateDoc = {
+    $set: {
+      paid: true
+    }
+  }
+  const result = await ordersCollection.updateOne(filter, updateDoc, options);
+  res.send(result);
+});
+
+app.put('/productSold/:id', verifyJwt, async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: ObjectId(id) };
+  const options = { upsert: true };
+  const updateDoc = {
+    $set: {
+      available: false
+    }
+  }
+  const result  = await productsCollection.updateOne(filter, updateDoc, options);
+  res.send(result);
+});
+
+
+
 // ---------------------> for admin
 app.get('/allBuyers', verifyJwt, verifyAdmin, async (req, res) => {
-  const query = {};
-  const result = await ordersCollection.find(query).project({ email: 1 }).toArray();
+  const query = { role: 'bearer' };
+  const email = req.params.email;
+  const result = await usersCollection.find(query).toArray();
   res.send(result)
 });
+
+app.delete('/buyer/:id', verifyJwt, verifyAdmin, async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: ObjectId(id) };
+  const result = await usersCollection.deleteOne(query);
+  res.send(result);
+});
+
 
 app.get('/allSellers', verifyJwt, verifyAdmin, async (req, res) => {
   const query = { role: "seller" };
   const result = await usersCollection.find(query).toArray();
+  res.send(result);
+});
+
+app.delete('/seller/:id', verifyJwt, verifyAdmin, async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: ObjectId(id) };
+  const result = await usersCollection.deleteOne(query);
   res.send(result);
 });
 
