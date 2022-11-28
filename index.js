@@ -92,11 +92,16 @@ const verifySeller = async (req, res, next) => {
 
 const verifyBearer = async (req, res, next) => {
   const decodedEmail = req.decoded.email;
-  const query = { email: decodedEmail }
-  const user = await usersCollection.findOne(query);
+  const email = req.query.email;
 
-  if (user?.role !== 'bearer') {
-    return res.status(403).send({ acknowledgement: false })
+  if (decodedEmail !== email) {
+    return res.status(403).send({ message: 'forbidden access' })
+  }
+
+  const query = { email };
+  const user = await usersCollection.findOne(query);
+  if (user?.role !== "bearer") {
+    return res.status(403).send({ message: 'forbidden access' })
   }
 
   next();
@@ -107,8 +112,16 @@ const verifyBearer = async (req, res, next) => {
 // # users
 app.post('/users', async (req, res) => { // store user info in Data base
   const user = req.body;
-  const result = await usersCollection.insertOne(user);
-  res.send(result);
+  const email = (user.email);
+  const query = { email }
+  const reqEmail = await usersCollection.findOne(query);
+  if(!reqEmail){
+    const result = await usersCollection.insertOne(user);
+    res.send(result);
+  }
+  else{
+    res.send({acknowledged: true})
+  }
 });
 
 app.get('/jwt', async (req, res) => {
@@ -178,7 +191,7 @@ app.delete('/product/:id', verifyJwt, verifySeller, async (req, res) => {
 
 
 // -------------> advertise
-app.get('/advertisement', async (req, res) => {
+app.get('/advertisement', verifyJwt, async (req, res) => {
   const query = { advertise: true, }
   const result = await productsCollection.find(query).toArray();
   res.send(result);
@@ -220,6 +233,15 @@ app.put('/available/:id', async (req, res) => {
 });
 
 
+// ------> payment
+app.get('/order/:id', async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: ObjectId(id) }
+  const result = await ordersCollection.findOne(query);
+  res.send(result);
+});
+
+
 // ---------------------> for admin
 app.get('/allBuyers', verifyJwt, verifyAdmin, async (req, res) => {
   const query = {};
@@ -236,7 +258,7 @@ app.get('/allSellers', verifyJwt, verifyAdmin, async (req, res) => {
 app.put('/verifySeller/:email', async (req, res) => {
   const email = req.params.email;
   const filter = { sellerEmail: email };
-  const query = {email}
+  const query = { email }
   const options = { upsert: true };
   const updateDoc = {
     $set: {
