@@ -101,6 +101,9 @@ const verifyBearer = async (req, res, next) => {
   next();
 };
 
+
+
+
 // # users
 app.post('/users', async (req, res) => { // store user info in Data base
   const user = req.body;
@@ -123,6 +126,7 @@ app.get('/jwt', async (req, res) => {
 
 
 
+
 // categories
 app.get('/categories', async (req, res) => {
   const query = {};
@@ -138,6 +142,8 @@ app.get('/category/:id', async (req, res) => {
 });
 
 
+
+
 // -------> products
 app.post('/product', verifyJwt, verifySeller, async (req, res) => {
   const data = req.body;
@@ -146,29 +152,12 @@ app.post('/product', verifyJwt, verifySeller, async (req, res) => {
 });
 
 
-// যদি সেলার already থাকে তাহলে database add করা দরকার নায়
-// app.post('/seller', async (req, res) => {
-//   const data = req.body;
-//   const email = data.email;
-//   const query = { email };
-//   const seller = await sellersCollection.findOne(query);
-//   if(seller) {
-//     return res.send({acknowledgement: false})
-//   }
-//   const result = await sellersCollection.insertOne(data);
-//   res.send(result);
-// });
-
-
-
-
 app.get('/myProducts', verifyJwt, verifySeller, async (req, res) => {
   const email = req.query.email;
   const query = { sellerEmail: email };
   const result = await productsCollection.find(query).toArray();
   res.send(result);
 });
-
 
 app.put('/products/:id', verifyJwt, verifySeller, async (req, res) => { // for advertise 
   const id = req.params.id;
@@ -185,7 +174,6 @@ app.put('/products/:id', verifyJwt, verifySeller, async (req, res) => { // for a
   res.send(result)
 });
 
-
 app.delete('/product/:id', verifyJwt, verifySeller, async (req, res) => {
   const id = req.params.id;
   const query = { _id: ObjectId(id) };
@@ -195,13 +183,13 @@ app.delete('/product/:id', verifyJwt, verifySeller, async (req, res) => {
 
 
 
+
 // -------------> advertise
 app.get('/advertisement', async (req, res) => {
   const query = { advertise: true, }
   const result = await productsCollection.find(query).toArray();
   res.send(result);
 });
-
 
 app.get('/myBuyers', verifyJwt, verifySeller, async (req, res) => {
   const email = req.query.email;
@@ -213,9 +201,7 @@ app.get('/myBuyers', verifyJwt, verifySeller, async (req, res) => {
 
 
 
-
 // -------> orders
-// when order success, product available: false
 app.post('/order', async (req, res) => {
   const order = req.body;
   const result = await ordersCollection.insertOne(order);
@@ -228,7 +214,6 @@ app.get('/orders', verifyJwt, async (req, res) => {
   const result = await ordersCollection.find(query).toArray();
   res.send(result);
 });
-
 
 app.put('/available/:id', async (req, res) => {
   const id = req.params.id;
@@ -244,6 +229,8 @@ app.put('/available/:id', async (req, res) => {
 });
 
 
+
+
 // ---------------------> for admin
 app.get('/allBuyers', verifyJwt, verifyAdmin, async (req, res) => {
   const query = {};
@@ -252,21 +239,23 @@ app.get('/allBuyers', verifyJwt, verifyAdmin, async (req, res) => {
 });
 
 app.get('/allSellers', verifyJwt, verifyAdmin, async (req, res) => {
-  const query = {};
-  const result = await productsCollection.find(query).project({ sellerEmail: 1, sellerName: 1, verify: 1, }).toArray();
+  const query = { role: "seller" };
+  const result = await usersCollection.find(query).toArray();
   res.send(result);
 });
 
 app.put('/verifySeller/:email', async (req, res) => {
   const email = req.params.email;
-  const query = { sellerEmail: email };
+  const filter = { sellerEmail: email };
+  const query = {email}
   const options = { upsert: true };
   const updateDoc = {
     $set: {
       verify: true
     }
   }
-  const result = await productsCollection.updateMany(query, updateDoc, options);
+  const result = await productsCollection.updateMany(filter, updateDoc, options);
+  const users = await usersCollection.updateOne(query, updateDoc, options);
   res.send(result);
 });
 
@@ -310,6 +299,7 @@ app.get('/user/buyer/:email', async (req, res) => { // check user is buyer
 
 
 
+// ----------------
 app.get('/', (req, res) => {
   res.send('Used Product server is running')
 });
@@ -335,15 +325,3 @@ app.listen(port, () => {
  * seller > myProducts + addProduct + myBuyers
  * buyer > myOrder + wishlist
 */
-
-// app.get('/addPrice', async (req, res) => {
-//   const filter = {};
-//   const options = { upsert: true };
-//   const updateDoc = {
-//     $set: {
-//       verify: false
-//     }
-//   }
-//   const result = await productsCollection.updateMany(filter, updateDoc, options);
-//   res.send(result)
-// });
