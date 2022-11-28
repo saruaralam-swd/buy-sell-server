@@ -56,6 +56,7 @@ const ordersCollection = client.db('usedProductResale').collection('orders');
 const sellersCollection = client.db('usedProductResale').collection('sellers');
 
 
+
 const verifyAdmin = async (req, res, next) => {
   const decodedEmail = req.decoded.email;
   const email = req.query.email;
@@ -103,7 +104,6 @@ const verifyBearer = async (req, res, next) => {
 
 
 
-
 // # users
 app.post('/users', async (req, res) => { // store user info in Data base
   const user = req.body;
@@ -125,8 +125,6 @@ app.get('/jwt', async (req, res) => {
 });
 
 
-
-
 // categories
 app.get('/categories', async (req, res) => {
   const query = {};
@@ -142,15 +140,12 @@ app.get('/category/:id', async (req, res) => {
 });
 
 
-
-
 // -------> products
 app.post('/product', verifyJwt, verifySeller, async (req, res) => {
   const data = req.body;
   const result = await productsCollection.insertOne(data);
   res.send(result);
 });
-
 
 app.get('/myProducts', verifyJwt, verifySeller, async (req, res) => {
   const email = req.query.email;
@@ -182,8 +177,6 @@ app.delete('/product/:id', verifyJwt, verifySeller, async (req, res) => {
 });
 
 
-
-
 // -------------> advertise
 app.get('/advertisement', async (req, res) => {
   const query = { advertise: true, }
@@ -197,8 +190,6 @@ app.get('/myBuyers', verifyJwt, verifySeller, async (req, res) => {
   const result = await ordersCollection.find(query).toArray();
   res.send(result)
 });
-
-
 
 
 // -------> orders
@@ -229,8 +220,6 @@ app.put('/available/:id', async (req, res) => {
 });
 
 
-
-
 // ---------------------> for admin
 app.get('/allBuyers', verifyJwt, verifyAdmin, async (req, res) => {
   const query = {};
@@ -259,7 +248,6 @@ app.put('/verifySeller/:email', async (req, res) => {
   res.send(result);
 });
 
-
 app.get('/addPrice', verifyJwt, verifyAdmin, async (req, res) => {
   const filter = {};
   const options = { upsert: true };
@@ -271,8 +259,6 @@ app.get('/addPrice', verifyJwt, verifyAdmin, async (req, res) => {
   const result = await productsCollection.updateMany(filter, updateDoc, options);
   res.send(result)
 });
-
-
 
 
 // ----> check user role <----
@@ -296,7 +282,6 @@ app.get('/user/buyer/:email', async (req, res) => { // check user is buyer
   const user = await usersCollection.findOne(query);
   res.send({ isBuyer: user?.role === 'bearer' })
 });
-
 
 
 // ----------------
