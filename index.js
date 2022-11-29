@@ -86,14 +86,14 @@ const verifySeller = async (req, res, next) => {
 
   const query = { email };
   const user = await usersCollection.findOne(query);
-  if (user?.role !== "seller") {
+  if (user?.role !== "Seller") {
     return res.status(403).send({ message: 'forbidden access' })
   }
 
   next();
 };
 
-const verifyBearer = async (req, res, next) => {
+const verifyBuyer = async (req, res, next) => {
   const decodedEmail = req.decoded.email;
   const email = req.query.email;
 
@@ -103,7 +103,7 @@ const verifyBearer = async (req, res, next) => {
 
   const query = { email };
   const user = await usersCollection.findOne(query);
-  if (user?.role !== "bearer") {
+  if (user?.role !== "Buyer") {
     return res.status(403).send({ message: 'forbidden access' })
   }
 
@@ -150,15 +150,16 @@ app.get('/categories', async (req, res) => {
 
 app.get('/category/:id', async (req, res) => {
   const id = req.params.id;
-  const query = { categoryId: id, }
+  const query = { categoryId: id, available: true }
   const result = await productsCollection.find(query).toArray();
   res.send(result);
 });
 
 
 // -------> products
-app.post('/product', verifyJwt, verifySeller, async (req, res) => {
+app.post('/product', verifyJwt, async (req, res) => {
   const data = req.body;
+  // console.log(data);
   const result = await productsCollection.insertOne(data);
   res.send(result);
 });
@@ -192,6 +193,32 @@ app.delete('/product/:id', verifyJwt, verifySeller, async (req, res) => {
   res.send(result);
 });
 
+app.put('/productReport/:id', verifyJwt, async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: ObjectId(id) };
+  const options = { upsert: true };
+  const updateDoc = {
+    $set: {
+      report: true
+    },
+  };
+  const result = await productsCollection.updateOne(query, updateDoc, options);
+  res.send(result);
+});
+
+app.get('/reportedProduct', verifyJwt, verifyAdmin, async (req, res) => {
+  const query = { report: true };
+  const result = await productsCollection.find(query).toArray();
+  res.send(result);
+});
+
+
+app.delete('/reportProduct/:id', async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: ObjectId(id) }
+  const result = await productsCollection.deleteOne(query);
+  res.send(result);
+});
 
 // -------------> advertise
 app.get('/advertisement', async (req, res) => {
@@ -292,7 +319,7 @@ app.put('/productSold/:id', verifyJwt, async (req, res) => {
       available: false
     }
   }
-  const result  = await productsCollection.updateOne(filter, updateDoc, options);
+  const result = await productsCollection.updateOne(filter, updateDoc, options);
   res.send(result);
 });
 
@@ -300,7 +327,7 @@ app.put('/productSold/:id', verifyJwt, async (req, res) => {
 
 // ---------------------> for admin
 app.get('/allBuyers', verifyJwt, verifyAdmin, async (req, res) => {
-  const query = { role: 'bearer' };
+  const query = { role: 'Buyer' };
   const email = req.params.email;
   const result = await usersCollection.find(query).toArray();
   res.send(result)
@@ -315,7 +342,7 @@ app.delete('/buyer/:id', verifyJwt, verifyAdmin, async (req, res) => {
 
 
 app.get('/allSellers', verifyJwt, verifyAdmin, async (req, res) => {
-  const query = { role: "seller" };
+  const query = { role: "Seller" };
   const result = await usersCollection.find(query).toArray();
   res.send(result);
 });
@@ -367,14 +394,14 @@ app.get('/user/seller/:email', async (req, res) => { // check user is seller
   const email = req.params.email;
   const query = { email }
   const user = await usersCollection.findOne(query);
-  res.send({ isSeller: user?.role === 'seller' })
+  res.send({ isSeller: user?.role === 'Seller' })
 });
 
 app.get('/user/buyer/:email', async (req, res) => { // check user is buyer
   const email = req.params.email;
   const query = { email }
   const user = await usersCollection.findOne(query);
-  res.send({ isBuyer: user?.role === 'bearer' })
+  res.send({ isBuyer: user?.role === 'Buyer' })
 });
 
 
