@@ -157,6 +157,12 @@ app.get('/category/:id', async (req, res) => {
 
 
 // -------> products
+app.get('/allProducts', async(req, res) => {
+  const query = {};
+  const result = await productsCollection.find(query).toArray();
+  res.send(result);
+});
+
 app.post('/product', verifyJwt, async (req, res) => {
   const data = req.body;
   // console.log(data);
