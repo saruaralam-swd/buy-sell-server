@@ -426,19 +426,3 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`server running on the port ${port}`.cyan);
 });
-
-/**
- * user
- *  category
- * allCategory + category/id (display all products)
-
- * product
-
- * order
- * product order
-
- * check user role
- * admin > all buyer + all seller + reported product
- * seller > myProducts + addProduct + myBuyers
- * buyer > myOrder + wishlist
-*/

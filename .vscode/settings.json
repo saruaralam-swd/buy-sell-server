@@ -1,0 +1,13 @@
+{
+  "peacock.color": "FAA533",
+  "workbench.colorCustomizations": {
+    "commandCenter.border": "#15202b99",
+    "sash.hoverBorder": "#fbbb65",
+    "titleBar.activeBackground": "#faa533",
+    "titleBar.activeForeground": "#15202b",
+    "titleBar.inactiveBackground": "#faa53399",
+    "titleBar.inactiveForeground": "#15202b99"
+  },
+  "peacock.affectActivityBar": false,
+  "peacock.affectStatusBar": false
+}
