@@ -57,18 +57,13 @@ run().catch((error) => {
 });
 
 // --------------------------- collection --------------------------->
-const usersCollection = client.db("usedProductResale").collection("users");
-const categoriesCollection = client
-  .db("usedProductResale")
-  .collection("categories");
-const productsCollection = client
-  .db("usedProductResale")
-  .collection("products");
-const ordersCollection = client.db("usedProductResale").collection("orders");
-const sellersCollection = client.db("usedProductResale").collection("sellers");
-const paymentsCollection = client
-  .db("usedProductResale")
-  .collection("payments");
+const dbName = client.db("usedProductResale");
+const usersCollection = dbName.collection("users");
+const categoriesCollection = dbName.collection("categories");
+const productsCollection = dbName.collection("products");
+const ordersCollection = dbName.collection("orders");
+const sellersCollection = dbName.collection("sellers");
+const paymentsCollection = dbName.collection("payments");
 
 const verifyAdmin = async (req, res, next) => {
   const decodedEmail = req.decoded.email;
