@@ -49,6 +49,11 @@ async function run() {
   try {
     await client.connect();
     console.log("DB connection".yellow.italic);
+
+    // test api
+    app.get("/hello", (req, res) => {
+      res.send("response from async function");
+    });
   } finally {
   }
 }
@@ -413,7 +418,7 @@ app.get("/user/buyer/:email", async (req, res) => {
   res.send({ isBuyer: user?.role === "Buyer" });
 });
 
-// ----------------
+// -------root api
 app.get("/", (req, res) => {
   res.send("Used Product server is running");
 });
