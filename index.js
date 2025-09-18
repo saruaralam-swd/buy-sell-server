@@ -5,23 +5,20 @@ require("colors");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-
 const app = express();
+const port = process.env.PORT || 5000;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.0269g6x.mongodb.net/?retryWrites=true&w=majority`;
 
 // middleware
 app.use(cors());
 app.use(express.json());
 
-const port = process.env.PORT || 5000;
-
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.0269g6x.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
 
-// middleware (verify jwt)
 function verifyJwt(req, res, next) {
   const header = req.headers.authorization;
 
@@ -44,26 +41,6 @@ function verifyJwt(req, res, next) {
     next();
   });
 }
-
-async function run() {
-  try {
-    await client.connect();
-    console.log("DB connection".yellow.italic);
-  } finally {
-  }
-}
-run().catch((error) => {
-  console.log(error.name.bgRed, error.message.bold);
-});
-
-// --------------------------- collection --------------------------->
-const dbName = client.db("usedProductResale");
-const usersCollection = dbName.collection("users");
-const categoriesCollection = dbName.collection("categories");
-const productsCollection = dbName.collection("products");
-const ordersCollection = dbName.collection("orders");
-const sellersCollection = dbName.collection("sellers");
-const paymentsCollection = dbName.collection("payments");
 
 const verifyAdmin = async (req, res, next) => {
   const decodedEmail = req.decoded.email;
@@ -115,7 +92,16 @@ const verifyBuyer = async (req, res, next) => {
   next();
 };
 
-// # users
+// --------------------------- collection --------------------------->
+const dbName = client.db("usedProductResale");
+const usersCollection = dbName.collection("users");
+const categoriesCollection = dbName.collection("categories");
+const productsCollection = dbName.collection("products");
+const ordersCollection = dbName.collection("orders");
+const sellersCollection = dbName.collection("sellers");
+const paymentsCollection = dbName.collection("payments");
+
+//  users
 app.post("/users", async (req, res) => {
   // store user info in Data base
   const user = req.body;
@@ -159,7 +145,7 @@ app.get("/category/:id", async (req, res) => {
   res.send(result);
 });
 
-// -------> products
+// products
 app.get("/allProducts", async (req, res) => {
   const query = {};
   const result = await productsCollection.find(query).toArray();
@@ -168,7 +154,6 @@ app.get("/allProducts", async (req, res) => {
 
 app.post("/product", verifyJwt, async (req, res) => {
   const data = req.body;
-  // console.log(data);
   const result = await productsCollection.insertOne(data);
   res.send(result);
 });
@@ -229,7 +214,7 @@ app.delete("/reportProduct/:id", async (req, res) => {
   res.send(result);
 });
 
-// -------------> advertise
+// advertise
 app.get("/advertisement", async (req, res) => {
   const query = { advertise: true, available: true };
   const result = await productsCollection.find(query).toArray();
@@ -243,7 +228,7 @@ app.get("/myBuyers", verifyJwt, verifySeller, async (req, res) => {
   res.send(result);
 });
 
-// -------> orders
+// orders
 app.post("/order", async (req, res) => {
   const order = req.body;
   const result = await ordersCollection.insertOne(order);
@@ -270,7 +255,7 @@ app.put("/available/:id", async (req, res) => {
   res.send(result);
 });
 
-// ------> payment
+// payment
 app.get("/order/:id", async (req, res) => {
   const id = req.params.id;
   const query = { _id: ObjectId(id) };
@@ -325,7 +310,7 @@ app.put("/productSold/:id", verifyJwt, async (req, res) => {
   res.send(result);
 });
 
-// ---------------------> for admin
+// for admin
 app.get("/allBuyers", verifyJwt, verifyAdmin, async (req, res) => {
   const query = { role: "Buyer" };
   const email = req.params.email;
@@ -388,7 +373,7 @@ app.get("/addPrice", verifyJwt, verifyAdmin, async (req, res) => {
   res.send(result);
 });
 
-// ----> check user role <----
+// check user role
 app.get("/user/admin/:email", async (req, res) => {
   // check user is admin
   const email = req.params.email;
@@ -413,7 +398,7 @@ app.get("/user/buyer/:email", async (req, res) => {
   res.send({ isBuyer: user?.role === "Buyer" });
 });
 
-// -------root api
+// root
 app.get("/", (req, res) => {
   res.send("Used Product server is running");
 });
