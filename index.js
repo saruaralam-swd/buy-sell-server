@@ -443,6 +443,8 @@ app.get("/", (req, res) => {
   res.send("Used Product server is running");
 });
 
-app.listen(port, () => {
-  console.log(`server running on the port ${port}`.cyan);
-});
+// app.listen(port, () => {
+//   console.log(`server running on the port ${port}`.cyan);
+// });
+
+module.exports = app;
